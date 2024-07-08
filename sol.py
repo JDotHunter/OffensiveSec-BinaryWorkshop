@@ -1,6 +1,7 @@
 from pwn import *
 
 io = process('sh')
-io.sendline('echo Hello World')
-io.recvline()
+io.sendline(b'echo Hello World')
+object = io.recvline()
+print(object)
 
